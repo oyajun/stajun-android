@@ -22,6 +22,9 @@ class LoginViewModel : ViewModel() {
 
     fun updateEmail(email: String) {
         _loginData.value = _loginData.value.copy(email = email)
+        _loginData.value = _loginData.value.copy(
+            emailValid = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+        )
     }
 
     fun updateOtp(otp: String) {
@@ -31,7 +34,7 @@ class LoginViewModel : ViewModel() {
     fun submitEmail() {
         viewModelScope.launch {
             _loginData.value = _loginData.value.copy(loginState = LoginState.LOADING)
-
+            _loginData.value = _loginData.value.copy(otp = "")
             val client = HttpClient(CIO)
             try {
                 Log.d("LoginViewModel", "接続試行先: ${BuildConfig.API_BASE_URL}")
