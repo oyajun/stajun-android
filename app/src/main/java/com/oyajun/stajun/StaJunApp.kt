@@ -24,14 +24,15 @@ fun StaJunApp() {
 
 @Composable
 fun NavigationHost(navController: NavHostController, modifier: Modifier = Modifier) {
+    val loginViewModel = androidx.lifecycle.viewmodel.compose.viewModel<com.oyajun.stajun.ui.login.LoginViewModel>()
+    val loginData = loginViewModel.loginData.collectAsState().value
     NavHost(
         navController = navController,
         startDestination = "login_email",
         modifier = modifier.fillMaxSize()
     ) {
         composable("login_email") {
-            val loginViewModel = androidx.lifecycle.viewmodel.compose.viewModel<com.oyajun.stajun.ui.login.LoginViewModel>()
-            val loginData = loginViewModel.loginData.collectAsState().value
+
             LoginEmailScreen(
                 email = loginData.email,
                 onEmailChange = { loginViewModel.updateEmail(it) },
@@ -40,8 +41,6 @@ fun NavigationHost(navController: NavHostController, modifier: Modifier = Modifi
             )
         }
         composable("login_otp") {
-            val loginViewModel = androidx.lifecycle.viewmodel.compose.viewModel<com.oyajun.stajun.ui.login.LoginViewModel>()
-            val loginData = loginViewModel.loginData.collectAsState().value
             LoginOtpScreen(
                 email = loginData.email,
                 otp = loginData.otp,
