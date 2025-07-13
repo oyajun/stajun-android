@@ -22,7 +22,7 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8080/api\"")
+            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000/api\"")
         }
         release {
             isMinifyEnabled = false
@@ -30,7 +30,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8080/api\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://stajun.oyajun.com:3000/api\"")
         }
     }
     compileOptions {

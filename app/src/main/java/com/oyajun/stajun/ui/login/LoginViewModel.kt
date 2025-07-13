@@ -1,5 +1,6 @@
 package com.oyajun.stajun.ui.login
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.oyajun.stajun.BuildConfig
@@ -31,22 +32,28 @@ class LoginViewModel : ViewModel() {
         viewModelScope.launch {
             _loginData.value = _loginData.value.copy(loginState = LoginState.LOADING)
 
-            viewModelScope.launch {
-                val client = HttpClient(CIO)
-                try {
-                    val response: HttpResponse = client.post(
-                        BuildConfig.API_BASE_URL + "/auth/email-otp/send-verification-otp"
-                    ) {
-                        contentType(ContentType.Application.Json)
-                        setBody("""{"email":"${_loginData.value.email}","type":"sign-in"}""")
-                    }
-                } catch (e: Exception) {
-                    println("Error sending email OTP: ${e.message}")
-                    _loginData.value = _loginData.value.copy(loginState = LoginState.ERROR)
-                }finally {
-                    client.close()
-                    _loginData.value = _loginData.value.copy(loginState = LoginState.SUCCESS)
+            val client = HttpClient(CIO)
+            try {
+                Log.d("LoginViewModel", "接続試行先: ${BuildConfig.API_BASE_URL}")
+                val response: HttpResponse = client.post(
+                    BuildConfig.API_BASE_URL + "/auth/email-otp/send-verification-otp"
+                ) {
+                    contentType(ContentType.Application.Json)
+                    setBody("""{"email":"${_loginData.value.email}","type":"sign-in"}""")
                 }
+                Log.d("LoginViewModel", "OTP リクエスト成功: ${response.status}")
+                if (response.status.isSuccess()) {
+                    _loginData.value = _loginData.value.copy(loginState = LoginState.SUCCESS)
+                } else {
+                    _loginData.value = _loginData.value.copy(loginState = LoginState.ERROR)
+                }
+            } catch (e: Exception) {
+                // logcat
+                Log.e("LoginViewModel", "📫Error sending email OTP", e)
+                println("Error sending email OTP: ${e.message}")
+                _loginData.value = _loginData.value.copy(loginState = LoginState.ERROR)
+            } finally {
+                client.close()
             }
         }
     }
