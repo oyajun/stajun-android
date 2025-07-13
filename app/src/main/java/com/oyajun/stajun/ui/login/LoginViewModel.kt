@@ -64,8 +64,29 @@ class LoginViewModel : ViewModel() {
     fun submitOtp() {
         viewModelScope.launch {
             _loginData.value = _loginData.value.copy(loginState = LoginState.LOADING)
-            // TODO: Implement OTP verification logic
-            // For now, just simulate success
+            val client = HttpClient(CIO)
+            try {
+                Log.d("LoginViewModel", "接続試行先: ${BuildConfig.API_BASE_URL}")
+                val response: HttpResponse = client.post(
+                    BuildConfig.API_BASE_URL + "/auth/sign-in/email-otp "
+                ) {
+                    contentType(ContentType.Application.Json)
+                    setBody("""{"email":"${_loginData.value.email}","otp":"${_loginData.value.otp}"}""")
+                }
+                Log.d("LoginViewModel", "OTP リクエスト成功: ${response.status}")
+                if (response.status.isSuccess()) {
+                    _loginData.value = _loginData.value.copy(loginState = LoginState.SUCCESS)
+                } else {
+                    _loginData.value = _loginData.value.copy(loginState = LoginState.ERROR)
+                }
+            } catch (e: Exception) {
+                // logcat
+                Log.e("LoginViewModel", "📫Error sending email OTP", e)
+                println("Error sending email OTP: ${e.message}")
+                _loginData.value = _loginData.value.copy(loginState = LoginState.ERROR)
+            } finally {
+                client.close()
+            }
             _loginData.value = _loginData.value.copy(loginState = LoginState.SUCCESS)
         }
     }
