@@ -37,7 +37,7 @@ fun NavigationHost(navController: NavHostController, modifier: Modifier = Modifi
                 email = loginData.email,
                 onEmailChange = { loginViewModel.updateEmail(it) },
                 onNext = { loginViewModel.submitEmail(); navController.navigate("login_otp") },
-                enabled = loginData.email.isNotBlank()
+                enabled = loginData.emailValid && loginData.loginState != com.oyajun.stajun.model.LoginState.LOADING
             )
         }
         composable("login_otp") {
