@@ -70,14 +70,23 @@ fun StaJunApp() {
                             label = { Text(item.title) },
                             selected = selectedRoute == item.route, // 詳細画面では前の画面を選択状態に
                             onClick = {
-                                navController.navigate(item.route) {
-                                    // ナビゲーションバーのアイテムを押したときに、
-                                    // 該当するルートまでのバックスタックをポップし、新しいルートに遷移する。
-                                    popUpTo(navController.graph.startDestinationId) {
-                                        saveState = true
+                                if (currentRoute?.startsWith("detail") == true && selectedRoute == item.route) {
+                                    // 詳細画面で現在選択されている画面のボタンを押した場合、その画面に遷移
+                                    navController.navigate(item.route) {
+                                        popUpTo("detail/{from}") { inclusive = true }
+                                        launchSingleTop = true
                                     }
-                                    launchSingleTop = true // 同じルートへの重複ナビゲーションを防ぐ
-                                    restoreState = true // 以前の保存された状態を復元する
+                                } else {
+                                    // 通常の画面遷移
+                                    navController.navigate(item.route) {
+                                        // ナビゲーションバーのアイテムを押したときに、
+                                        // 該当するルートまでのバックスタックをポップし、新しいルートに遷移する。
+                                        popUpTo(navController.graph.startDestinationId) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true // 同じルートへの重複ナビゲーションを防ぐ
+                                        restoreState = true // 以前の保存された状態を復元する
+                                    }
                                 }
                             }
                         )
