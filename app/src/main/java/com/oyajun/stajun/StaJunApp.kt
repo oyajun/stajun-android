@@ -2,6 +2,7 @@ package com.oyajun.stajun
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -24,7 +25,7 @@ sealed class Screen(
     val showNavigationBar: Boolean = true // NavigationBarの表示フラグを追加
 ) {
     object Home : Screen("home", "ホーム", { Icon(Icons.Filled.Home, contentDescription = "ホーム") })
-    object Search : Screen("search", "検索", { Icon(Icons.Filled.Search, contentDescription = "検索") })
+    object Record : Screen("record", "記録", { Icon(Icons.Filled.Create, contentDescription = "記録") })
     object Profile : Screen("profile", "プロフィール", { Icon(Icons.Filled.Person, contentDescription = "プロフィール") })
     object Detail : Screen("detail", "詳細", { /* 詳細画面にはアイコンは不要 */ }, showNavigationBar = true) // NavigationBarを表示に変更
 }
@@ -33,10 +34,10 @@ sealed class Screen(
 fun StaJunApp() {
     val navController = rememberNavController()
     // NavigationBarで表示するアイテムのリスト（NavigationBarに表示するものだけ）
-    val navBarItems = listOf(Screen.Home, Screen.Search, Screen.Profile)
+    val navBarItems = listOf(Screen.Home, Screen.Record, Screen.Profile)
 
     // 全ての画面を含むリスト
-    val allScreens = listOf(Screen.Home, Screen.Search, Screen.Profile, Screen.Detail)
+    val allScreens = listOf(Screen.Home, Screen.Record, Screen.Profile, Screen.Detail)
 
     // NavigationBarの表示/非表示を制御するための現在のルートを取得
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -107,7 +108,7 @@ fun StaJunApp() {
             composable(Screen.Home.route) {
                 HomeScreen(navController)
             }
-            composable(Screen.Search.route) {
+            composable(Screen.Record.route) {
                 SearchScreen(navController)
             }
             composable(Screen.Profile.route) {
@@ -143,7 +144,7 @@ fun SearchScreen(navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(text = "検索画面", modifier = Modifier.padding(bottom = 16.dp))
-        Button(onClick = { navController.navigate("detail/${Screen.Search.route}") }) {
+        Button(onClick = { navController.navigate("detail/${Screen.Record.route}") }) {
             Text("詳細画面へ")
         }
     }
