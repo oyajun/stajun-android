@@ -28,16 +28,21 @@ sealed class Screen(
     object Record : Screen("record", "記録", { Icon(Icons.Filled.Create, contentDescription = "記録") })
     object Profile : Screen("profile", "プロフィール", { Icon(Icons.Filled.Person, contentDescription = "プロフィール") })
     object Detail : Screen("detail", "詳細", { /* 詳細画面にはアイコンは不要 */ }, showNavigationBar = true) // NavigationBarを表示に変更
+    object LoginEmail : Screen("loginemailscreen", "ログイン", { /* ログイン画面にはアイコンは不要 */ }, showNavigationBar = false) // ログイン画面
 }
 
 @Composable
 fun StaJunApp() {
     val navController = rememberNavController()
+
+    // 仮のログイン状態管理（本来はViewModelやDataStoreなどで管理）
+    var isLoggedIn by remember { mutableStateOf(false) }
+
     // NavigationBarで表示するアイテムのリスト（NavigationBarに表示するものだけ）
     val navBarItems = listOf(Screen.Home, Screen.Record, Screen.Profile)
 
     // 全ての画面を含むリスト
-    val allScreens = listOf(Screen.Home, Screen.Record, Screen.Profile, Screen.Detail)
+    val allScreens = listOf(Screen.Home, Screen.Record, Screen.Profile, Screen.Detail, Screen.LoginEmail)
 
     // NavigationBarの表示/非表示を制御するための現在のルートを取得
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -63,6 +68,15 @@ fun StaJunApp() {
             navBackStackEntry?.arguments?.getString("from") ?: Screen.Home.route
         }
         else -> currentRoute
+    }
+
+    // ログイン状態をチェックして、未ログ入の場合はログイン画面に遷移
+    LaunchedEffect(isLoggedIn) {
+        if (!isLoggedIn && currentRoute != Screen.LoginEmail.route) {
+            navController.navigate(Screen.LoginEmail.route) {
+                popUpTo(0) { inclusive = true } // 全てのバックスタックをクリア
+            }
+        }
     }
 
     Scaffold(
@@ -117,6 +131,17 @@ fun StaJunApp() {
             composable("detail/{from}") { backStackEntry ->
                 val from = backStackEntry.arguments?.getString("from") ?: Screen.Home.route
                 DetailScreen(navController)
+            }
+            composable(Screen.LoginEmail.route) {
+                LoginScreen(
+                    navController = navController,
+                    onLoginSuccess = {
+                        isLoggedIn = true
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.LoginEmail.route) { inclusive = true }
+                        }
+                    }
+                )
             }
         }
     }
@@ -176,6 +201,30 @@ fun DetailScreen(navController: NavController) {
         Text(text = "遷移元: $from", modifier = Modifier.padding(bottom = 16.dp))
         Button(onClick = { navController.popBackStack() }) {
             Text("前の画面に戻る")
+        }
+    }
+}
+
+@Composable
+fun LoginScreen(
+    navController: NavController,
+    onLoginSuccess: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = "ログイン画面", modifier = Modifier.padding(bottom = 16.dp))
+        Text(text = "仮のログイン画面です", modifier = Modifier.padding(bottom = 32.dp))
+
+        Button(
+            onClick = {
+                // 仮のログイン処理（本来はここで認証処理を行う）
+                onLoginSuccess()
+            }
+        ) {
+            Text("ログイン")
         }
     }
 }
