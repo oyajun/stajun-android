@@ -29,14 +29,13 @@ sealed class Screen(
     object Detail : Screen("detail", "詳細", { /* 詳細画面にはアイコンは不要 */ }, showNavigationBar = true) // NavigationBarを表示に変更
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StaJunApp() {
     val navController = rememberNavController()
     // NavigationBarで表示するアイテムのリスト（NavigationBarに表示するものだけ）
     val navBarItems = listOf(Screen.Home, Screen.Search, Screen.Profile)
 
-    // 全ての画面の定義（NavigationBarの表示設定を含む）
+    // 全ての画面を含むリスト
     val allScreens = listOf(Screen.Home, Screen.Search, Screen.Profile, Screen.Detail)
 
     // NavigationBarの表示/非表示を制御するための現在のルートを取得
@@ -44,20 +43,25 @@ fun StaJunApp() {
     val currentRoute = navBackStackEntry?.destination?.route
 
     // 現在の画面でNavigationBarを表示するかどうかを判断
-    val shouldShowNavigationBar = if (currentRoute?.startsWith("detail") == true) {
-        // 詳細画面の場合はtrueを返す（Detail画面のshowNavigationBarがtrueなので）
-        Screen.Detail.showNavigationBar
-    } else {
-        val currentScreen = allScreens.find { it.route == currentRoute }
-        currentScreen?.showNavigationBar ?: false
+    val shouldShowNavigationBar = when {
+        // パラメータ付きルート（例: "detail/{from}"）の場合
+        currentRoute?.contains("/") == true -> {
+            val baseRoute = currentRoute.split("/")[0]
+            allScreens.find { it.route == baseRoute }?.showNavigationBar ?: true
+        }
+        // 通常のルートの場合
+        else -> {
+            allScreens.find { it.route == currentRoute }?.showNavigationBar ?: false
+        }
     }
 
-    // 詳細画面の場合、前の画面（遷移元）をパラメータから取得
-    val selectedRoute = if (currentRoute?.startsWith("detail") == true) {
-        // 詳細画面のパラメータから前の画面を取得
-        navBackStackEntry?.arguments?.getString("from") ?: Screen.Home.route
-    } else {
-        currentRoute
+    // 選択状態を決定（パラメータ付きルートの場合は遷移元を取得）
+    val selectedRoute = when {
+        currentRoute?.contains("/") == true -> {
+            // パラメータ付きルートの場合、パラメータから遷移元を取得
+            navBackStackEntry?.arguments?.getString("from") ?: Screen.Home.route
+        }
+        else -> currentRoute
     }
 
     Scaffold(
@@ -70,10 +74,10 @@ fun StaJunApp() {
                             label = { Text(item.title) },
                             selected = selectedRoute == item.route, // 詳細画面では前の画面を選択状態に
                             onClick = {
-                                if (currentRoute?.startsWith("detail") == true && selectedRoute == item.route) {
-                                    // 詳細画面で現在選択されている画面のボタンを押した場合、その画面に遷移
+                                if (currentRoute?.contains("/") == true && selectedRoute == item.route) {
+                                    // パラメータ付きルートで現在選択されている画面のボタンを押した場合、その画面に遷移
                                     navController.navigate(item.route) {
-                                        popUpTo("detail/{from}") { inclusive = true }
+                                        popUpTo(currentRoute) { inclusive = true }
                                         launchSingleTop = true
                                     }
                                 } else {
