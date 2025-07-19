@@ -40,67 +40,59 @@ sealed class Screen(
     val route: String,
     val title: String,
     val icon: @Composable () -> Unit,
-    val showNavigationBar: Boolean = true // NavigationBarの表示フラグを追加
+    val showNavigationBar: Boolean = true,
+    val isMainScreen: Boolean = false // メイン画面かどうかのフラグを追加
 ) {
-    object Home : Screen("home", "ホーム", { Icon(Icons.Filled.Home, contentDescription = "ホーム") })
-    object Record : Screen("record", "記録", { Icon(Icons.Filled.Create, contentDescription = "記録") })
-    object Profile : Screen("profile", "プロフィール", { Icon(Icons.Filled.Person, contentDescription = "プロフィール") })
-    object Detail : Screen("detail", "詳細", { /* 詳細画面にはアイコンは不要 */ }, showNavigationBar = true) // NavigationBarを表示に変更
-    object LoginEmail : Screen("login-email", "ログイン", { /* ログイン画面にはアイコンは不要 */ }, showNavigationBar = false) // ログイン画面
-    object LoginOtp : Screen("login-otp", "OTPログイン", { /* OTPログイン画面にはアイコンは不要 */ }, showNavigationBar = false) // OTPログイン画面
+    object Home : Screen("home", "ホーム", { Icon(Icons.Filled.Home, contentDescription = "ホーム") }, isMainScreen = true)
+    object Record : Screen("record", "記録", { Icon(Icons.Filled.Create, contentDescription = "記録") }, isMainScreen = true)
+    object Profile : Screen("profile", "プロフィール", { Icon(Icons.Filled.Person, contentDescription = "プロフィール") }, isMainScreen = true)
+    object Detail : Screen("detail", "詳細", { /* 詳細画面にはアイコンは不要 */ }, showNavigationBar = true)
+    object LoginEmail : Screen("login-email", "ログイン", { /* ログイン画面にはアイコンは不要 */ }, showNavigationBar = false)
+    object LoginOtp : Screen("login-otp", "OTPログイン", { /* OTPログイン画面にはアイコンは不要 */ }, showNavigationBar = false)
 }
 
 @Composable
 fun StaJunApp() {
     val navController = rememberNavController()
+    val loginViewModel: LoginViewModel = viewModel()
 
     // 仮のログイン状態管理（本来はViewModelやDataStoreなどで管理）
     var isLoggedIn by remember { mutableStateOf(false) }
 
-    // NavigationBarで表示するアイテムのリスト（NavigationBarに表示するものだけ）
+    // NavigationBarで表示するアイテムのリスト（メイン画面のみ）
     val navBarItems = listOf(Screen.Home, Screen.Record, Screen.Profile)
 
     // 全ての画面を含むリスト
-    val allScreens = listOf(Screen.Home, Screen.Record, Screen.Profile, Screen.Detail, Screen.LoginEmail)
+    val allScreens = listOf(Screen.Home, Screen.Record, Screen.Profile, Screen.Detail, Screen.LoginEmail, Screen.LoginOtp)
 
-    // NavigationBarの表示/非表示を制御するための現在のルートを取得
+    // 現在のルートとバックスタックエントリを取得
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // 現在の画面でNavigationBarを表示するかどうかを判断
+    // NavigationBarの表示/非表示を判断
     val shouldShowNavigationBar = when {
-        // パラメータ付きルート（例: "detail/{from}"）の場合
+        !isLoggedIn -> false // ログインしていない場合は表示しない
         currentRoute?.contains("/") == true -> {
+            // パラメータ付きルート（例: "detail/home"）の場合
             val baseRoute = currentRoute.split("/")[0]
-            allScreens.find { it.route == baseRoute }?.showNavigationBar ?: true
+            allScreens.find { it.route == baseRoute }?.showNavigationBar ?: false
         }
-        // 通常のルートの場合
         else -> {
+            // 通常のルートの場合
             allScreens.find { it.route == currentRoute }?.showNavigationBar ?: false
         }
     }
 
-    // 選択状態を決定（パラメータ付きルートの場合は遷移元を取得）
+    // 選択状態を決定（詳細画面では遷移元を選択状態にする）
     val selectedRoute = when {
-        currentRoute?.contains("/") == true -> {
-            // パラメータ付きルートの場合、パラメータから遷移元を取得
-            navBackStackEntry?.arguments?.getString("from") ?: Screen.Home.route
+        currentRoute?.startsWith("detail/") == true -> {
+            // 詳細画面の場合、URLパラメータから遷移元を取得
+            currentRoute.substringAfter("detail/")
         }
         else -> currentRoute
     }
 
-
-    val  loginViewModel: LoginViewModel = viewModel()
-
-    // ログイン状態をチェックして、未ログ入の場合はログイン画面に遷移
-    LaunchedEffect(isLoggedIn) {
-        if (!isLoggedIn && currentRoute != Screen.LoginEmail.route) {
-            navController.navigate(Screen.LoginEmail.route) {
-                popUpTo(0) { inclusive = true } // 全てのバックスタックをクリア
-            }
-        }
-    }
-
+    // ログイン状態の監視
     LaunchedEffect(loginViewModel.loginData.collectAsState().value.loginState) {
         val loginState = loginViewModel.loginData.value.loginState
         when (loginState) {
@@ -110,13 +102,22 @@ fun StaJunApp() {
                 }
             }
             LoginState.OTP_SUCCESS -> {
-                // OTP認証成功時はホーム画面へ遷移
+                // OTP認証成功時はログイン状態を更新してホーム画面へ遷移
                 isLoggedIn = true
                 navController.navigate(Screen.Home.route) {
-                    popUpTo(Screen.LoginOtp.route) { inclusive = true }
+                    popUpTo(0) { inclusive = true } // 全てのバックスタックをクリア
                 }
             }
             else -> {}
+        }
+    }
+
+    // 初期ログイン状態チェック
+    LaunchedEffect(Unit) {
+        if (!isLoggedIn && currentRoute != Screen.LoginEmail.route && currentRoute != Screen.LoginOtp.route) {
+            navController.navigate(Screen.LoginEmail.route) {
+                popUpTo(0) { inclusive = true }
+            }
         }
     }
 
@@ -124,28 +125,26 @@ fun StaJunApp() {
         bottomBar = {
             if (shouldShowNavigationBar) {
                 NavigationBar {
-                    navBarItems.forEachIndexed { index, item ->
+                    navBarItems.forEach { item ->
                         NavigationBarItem(
                             icon = { item.icon() },
                             label = { Text(item.title) },
-                            selected = selectedRoute == item.route, // 詳細画面では前の画面を選択状態に
+                            selected = selectedRoute == item.route,
                             onClick = {
-                                if (currentRoute?.contains("/") == true && selectedRoute == item.route) {
-                                    // パラメータ付きルートで現在選択されている画面のボタンを押した場合、その画面に遷移
+                                if (selectedRoute == item.route && currentRoute?.startsWith("detail/") == true) {
+                                    // 詳細画面で現在選択されている画面のボタンを押した場合、その画面に遷移
                                     navController.navigate(item.route) {
-                                        popUpTo(currentRoute) { inclusive = true }
+                                        popUpTo(item.route) { inclusive = true }
                                         launchSingleTop = true
                                     }
-                                } else {
+                                } else if (currentRoute != item.route) {
                                     // 通常の画面遷移
                                     navController.navigate(item.route) {
-                                        // ナビゲーションバーのアイテムを押したときに、
-                                        // 該当するルートまでのバックスタックをポップし、新しいルートに遷移する。
                                         popUpTo(navController.graph.startDestinationId) {
                                             saveState = true
                                         }
-                                        launchSingleTop = true // 同じルートへの重複ナビゲーションを防ぐ
-                                        restoreState = true // 以前の保存された状態を復元する
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
                                 }
                             }
@@ -157,7 +156,7 @@ fun StaJunApp() {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
+            startDestination = if (isLoggedIn) Screen.Home.route else Screen.LoginEmail.route,
             modifier = Modifier.padding(paddingValues)
         ) {
             composable(Screen.Home.route) {
@@ -171,7 +170,7 @@ fun StaJunApp() {
             }
             composable("detail/{from}") { backStackEntry ->
                 val from = backStackEntry.arguments?.getString("from") ?: Screen.Home.route
-                DetailScreen(navController)
+                DetailScreen(navController, from)
             }
             composable(Screen.LoginEmail.route) {
                 LoginEmailScreen(
@@ -181,9 +180,10 @@ fun StaJunApp() {
                     moveToNextScreen = { navController.navigate(Screen.LoginOtp.route) },
                     enabled = loginViewModel.loginData.collectAsState().value.emailValid,
                     loginState = loginViewModel.loginData.collectAsState().value.loginState,
+                    resetErrorState = { loginViewModel.resetErrorState() } // エラー状態リセット関数を追加
                 )
             }
-            composable ( Screen.LoginOtp.route ) {
+            composable(Screen.LoginOtp.route) {
                 LoginOtpScreen(
                     email = loginViewModel.loginData.collectAsState().value.email,
                     otp = loginViewModel.loginData.collectAsState().value.otp,
@@ -218,7 +218,7 @@ fun SearchScreen(navController: NavController) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "検索画面", modifier = Modifier.padding(bottom = 16.dp))
+        Text(text = "記録画面", modifier = Modifier.padding(bottom = 16.dp))
         Button(onClick = { navController.navigate("detail/${Screen.Record.route}") }) {
             Text("詳細画面へ")
         }
@@ -240,15 +240,21 @@ fun ProfileScreen(navController: NavController) {
 }
 
 @Composable
-fun DetailScreen(navController: NavController) {
-    val from = navController.previousBackStackEntry?.destination?.route ?: "不明"
+fun DetailScreen(navController: NavController, from: String = "不明") {
+    val fromScreenName = when (from) {
+        Screen.Home.route -> "ホーム"
+        Screen.Record.route -> "記録"
+        Screen.Profile.route -> "プロフィール"
+        else -> "不明"
+    }
+
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(text = "詳細画面", modifier = Modifier.padding(bottom = 16.dp))
-        Text(text = "遷移元: $from", modifier = Modifier.padding(bottom = 16.dp))
+        Text(text = "遷移元: $fromScreenName", modifier = Modifier.padding(bottom = 16.dp))
         Button(onClick = { navController.popBackStack() }) {
             Text("前の画面に戻る")
         }

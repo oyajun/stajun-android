@@ -35,14 +35,18 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     val loginData: StateFlow<LoginData> = _loginData.asStateFlow()
 
     fun updateEmail(email: String) {
-        _loginData.value = _loginData.value.copy(email = email)
         _loginData.value = _loginData.value.copy(
-            emailValid = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+            email = email,
+            emailValid = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches(),
+            loginState = LoginState.EMAIL_IDLE // エラー状態をリセット
         )
     }
 
     fun updateOtp(otp: String) {
-        _loginData.value = _loginData.value.copy(otp = otp)
+        _loginData.value = _loginData.value.copy(
+            otp = otp,
+            loginState = if (_loginData.value.loginState == LoginState.OTP_ERROR) LoginState.OTP_IDLE else _loginData.value.loginState // エラー状態をリセット
+        )
     }
 
     fun submitEmail() {
@@ -91,12 +95,19 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                     _loginData.value = _loginData.value.copy(loginState = LoginState.OTP_ERROR)
                 }
             } catch (e: Exception) {
-                // logcat
                 Log.e("LoginViewModel", "📫Error sending email OTP", e)
                 println("Error sending email OTP: ${e.message}")
                 _loginData.value = _loginData.value.copy(loginState = LoginState.OTP_ERROR)
             }
-            _loginData.value = _loginData.value.copy(loginState = LoginState.OTP_SUCCESS)
+        }
+    }
+
+    // エラー状態を手動でリセットする関数を追加
+    fun resetErrorState() {
+        when (_loginData.value.loginState) {
+            LoginState.EMAIL_ERROR -> _loginData.value = _loginData.value.copy(loginState = LoginState.EMAIL_IDLE)
+            LoginState.OTP_ERROR -> _loginData.value = _loginData.value.copy(loginState = LoginState.OTP_IDLE)
+            else -> {}
         }
     }
 
