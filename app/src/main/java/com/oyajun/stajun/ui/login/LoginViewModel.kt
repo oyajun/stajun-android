@@ -89,7 +89,16 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                     setBody("""{"email":"${_loginData.value.email}","otp":"${_loginData.value.otp}"}""")
                 }
                 Log.d("LoginViewModel", "OTP リクエスト成功: ${response.status}")
+
                 if (response.status.isSuccess()) {
+                    // cookieが正しく保存されているかチェック
+                    val prefs = getApplication<Application>().getSharedPreferences("cookies", Context.MODE_PRIVATE)
+                    val cookieSet = prefs.getStringSet("cookies", emptySet()) ?: emptySet()
+                    Log.d("LoginViewModel", "ログイン成功後のcookie数: ${cookieSet.size}")
+                    cookieSet.forEach { cookie ->
+                        Log.d("LoginViewModel", "保存されたCookie: $cookie")
+                    }
+
                     _loginData.value = _loginData.value.copy(loginState = LoginState.OTP_SUCCESS)
                 } else {
                     _loginData.value = _loginData.value.copy(loginState = LoginState.OTP_ERROR)

@@ -52,12 +52,13 @@ sealed class Screen(
 }
 
 @Composable
-fun StaJunApp() {
+fun StaJunApp(initialLoginState: Boolean = false) {
     val navController = rememberNavController()
     val loginViewModel: LoginViewModel = viewModel()
 
-    // 仮のログイン状態管理（本来はViewModelやDataStoreなどで管理）
-    var isLoggedIn by remember { mutableStateOf(false) }
+    // 仮のログイン状態管理（MainActivityから初期値を受け取る）
+    var isLoggedIn by remember { mutableStateOf(initialLoginState) }
+    var isInitialized by remember { mutableStateOf(true) } // MainActivityで既に初期化済み
 
     // NavigationBarで表示するアイテムのリスト（メイン画面のみ）
     val navBarItems = listOf(Screen.Home, Screen.Record, Screen.Profile)
@@ -112,14 +113,6 @@ fun StaJunApp() {
         }
     }
 
-    // 初期ログイン状態チェック
-    LaunchedEffect(Unit) {
-        if (!isLoggedIn && currentRoute != Screen.LoginEmail.route && currentRoute != Screen.LoginOtp.route) {
-            navController.navigate(Screen.LoginEmail.route) {
-                popUpTo(0) { inclusive = true }
-            }
-        }
-    }
 
     Scaffold(
         bottomBar = {
