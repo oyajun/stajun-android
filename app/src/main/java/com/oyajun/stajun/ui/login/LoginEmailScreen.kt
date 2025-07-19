@@ -37,7 +37,7 @@ fun LoginEmailScreen(
     moveToNextScreen: () -> Unit = {},
     enabled: Boolean,
     loginState: LoginState,
-    resetErrorState: () -> Unit = {} // エラー状態リセット関数を追加
+    resetErrorState: () -> Unit = {},
 ) {
     val openAlertDialog = remember { mutableStateOf(false) }
 
@@ -85,7 +85,7 @@ fun LoginEmailScreen(
             ErrorAlertDialog(
                 onDismissRequest = {
                     openAlertDialog.value = false
-                    resetErrorState() // エラー状態をリセット
+                    resetErrorState()
                 },
                 icon = Icons.Default.Warning
             )

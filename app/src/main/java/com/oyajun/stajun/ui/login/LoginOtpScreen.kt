@@ -43,8 +43,17 @@ fun LoginOtpScreen(
             label = { Text("ワンタイムパスワード") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
+            isError = loginState == LoginState.OTP_ERROR,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword)
         )
+        when (loginState) {
+            LoginState.OTP_ERROR -> {
+                Text("ワンタイムパスワードが間違っています", color = MaterialTheme.colorScheme.error)
+            }
+            else -> {
+                Text("")
+            }
+        }
         Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = submitOtp,
@@ -59,15 +68,6 @@ fun LoginOtpScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("戻る")
-        }
-        when (loginState) {
-            LoginState.OTP_LOADING -> {
-                CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
-            }
-            LoginState.OTP_ERROR -> {
-                Text("エラー", color = MaterialTheme.colorScheme.error)
-            }
-            else -> {}
         }
     }
 }

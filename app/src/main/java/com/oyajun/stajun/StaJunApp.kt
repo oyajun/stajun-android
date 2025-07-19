@@ -180,7 +180,7 @@ fun StaJunApp() {
                     moveToNextScreen = { navController.navigate(Screen.LoginOtp.route) },
                     enabled = loginViewModel.loginData.collectAsState().value.emailValid,
                     loginState = loginViewModel.loginData.collectAsState().value.loginState,
-                    resetErrorState = { loginViewModel.resetErrorState() } // エラー状態リセット関数を追加
+                    resetErrorState = { loginViewModel.resetErrorState() }
                 )
             }
             composable(Screen.LoginOtp.route) {
