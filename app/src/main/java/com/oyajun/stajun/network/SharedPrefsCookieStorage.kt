@@ -26,7 +26,7 @@ class SharedPrefsCookieStorage(
         return set.mapNotNull { header ->
             parseServerSetCookieHeader(header)
         }.filter { cookie ->
-            cookie.matches(requestUrl)
+            cookie.domain?.let { requestUrl.host.endsWith(it) } ?: false
         }
     }
 
