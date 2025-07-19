@@ -1,8 +1,17 @@
 package com.oyajun.stajun.ui.login
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -15,7 +24,7 @@ fun LoginOtpScreen(
     email : String,
     otp: String,
     onOtpChange: (String) -> Unit,
-    onLogin: () -> Unit,
+    submitOtp: () -> Unit,
     loginState: LoginState,
     onBack: () -> Unit
 ) {
@@ -38,9 +47,9 @@ fun LoginOtpScreen(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(
-            onClick = onLogin,
+            onClick = submitOtp,
             modifier = Modifier.fillMaxWidth(),
-            enabled = otp.isNotBlank() && loginState != LoginState.LOADING
+            enabled = otp.isNotBlank() && loginState != LoginState.OTP_LOADING
         ) {
             Text("認証")
         }
@@ -52,10 +61,10 @@ fun LoginOtpScreen(
             Text("戻る")
         }
         when (loginState) {
-            LoginState.LOADING -> {
+            LoginState.OTP_LOADING -> {
                 CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
             }
-            LoginState.ERROR -> {
+            LoginState.OTP_ERROR -> {
                 Text("エラー", color = MaterialTheme.colorScheme.error)
             }
             else -> {}
@@ -70,8 +79,8 @@ fun LoginOtpScreenPreview() {
         email = "example@example.com",
         otp = "",
         onOtpChange = {},
-        onLogin = {},
-        loginState = LoginState.IDLE,
-        onBack = {}
+        loginState = LoginState.OTP_IDLE,
+        onBack = {},
+        submitOtp = {}
     )
 }

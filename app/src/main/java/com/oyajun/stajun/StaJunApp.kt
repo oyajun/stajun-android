@@ -1,21 +1,39 @@
 package com.oyajun.stajun
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.oyajun.stajun.model.LoginState
+import com.oyajun.stajun.ui.login.LoginEmailScreen
+import com.oyajun.stajun.ui.login.LoginOtpScreen
+import com.oyajun.stajun.ui.login.LoginViewModel
 
 // ナビゲーションルートの定義
 sealed class Screen(
@@ -28,7 +46,8 @@ sealed class Screen(
     object Record : Screen("record", "記録", { Icon(Icons.Filled.Create, contentDescription = "記録") })
     object Profile : Screen("profile", "プロフィール", { Icon(Icons.Filled.Person, contentDescription = "プロフィール") })
     object Detail : Screen("detail", "詳細", { /* 詳細画面にはアイコンは不要 */ }, showNavigationBar = true) // NavigationBarを表示に変更
-    object LoginEmail : Screen("loginemailscreen", "ログイン", { /* ログイン画面にはアイコンは不要 */ }, showNavigationBar = false) // ログイン画面
+    object LoginEmail : Screen("login-email", "ログイン", { /* ログイン画面にはアイコンは不要 */ }, showNavigationBar = false) // ログイン画面
+    object LoginOtp : Screen("login-otp", "OTPログイン", { /* OTPログイン画面にはアイコンは不要 */ }, showNavigationBar = false) // OTPログイン画面
 }
 
 @Composable
@@ -70,12 +89,34 @@ fun StaJunApp() {
         else -> currentRoute
     }
 
+
+    val  loginViewModel: LoginViewModel = viewModel()
+
     // ログイン状態をチェックして、未ログ入の場合はログイン画面に遷移
     LaunchedEffect(isLoggedIn) {
         if (!isLoggedIn && currentRoute != Screen.LoginEmail.route) {
             navController.navigate(Screen.LoginEmail.route) {
                 popUpTo(0) { inclusive = true } // 全てのバックスタックをクリア
             }
+        }
+    }
+
+    LaunchedEffect(loginViewModel.loginData.collectAsState().value.loginState) {
+        val loginState = loginViewModel.loginData.value.loginState
+        when (loginState) {
+            LoginState.EMAIL_SUCCESS -> {
+                navController.navigate(Screen.LoginOtp.route) {
+                    popUpTo(Screen.LoginEmail.route) { inclusive = true }
+                }
+            }
+            LoginState.OTP_SUCCESS -> {
+                // OTP認証成功時はホーム画面へ遷移
+                isLoggedIn = true
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(Screen.LoginOtp.route) { inclusive = true }
+                }
+            }
+            else -> {}
         }
     }
 
@@ -133,14 +174,23 @@ fun StaJunApp() {
                 DetailScreen(navController)
             }
             composable(Screen.LoginEmail.route) {
-                LoginScreen(
-                    navController = navController,
-                    onLoginSuccess = {
-                        isLoggedIn = true
-                        navController.navigate(Screen.Home.route) {
-                            popUpTo(Screen.LoginEmail.route) { inclusive = true }
-                        }
-                    }
+                LoginEmailScreen(
+                    email = loginViewModel.loginData.collectAsState().value.email,
+                    onEmailChange = { loginViewModel.updateEmail(it) },
+                    submitEmail = { loginViewModel.submitEmail() },
+                    moveToNextScreen = { navController.navigate(Screen.LoginOtp.route) },
+                    enabled = loginViewModel.loginData.collectAsState().value.emailValid,
+                    loginState = loginViewModel.loginData.collectAsState().value.loginState,
+                )
+            }
+            composable ( Screen.LoginOtp.route ) {
+                LoginOtpScreen(
+                    email = loginViewModel.loginData.collectAsState().value.email,
+                    otp = loginViewModel.loginData.collectAsState().value.otp,
+                    onOtpChange = { loginViewModel.updateOtp(it) },
+                    submitOtp = { loginViewModel.submitOtp() },
+                    loginState = loginViewModel.loginData.collectAsState().value.loginState,
+                    onBack = { navController.popBackStack() }
                 )
             }
         }
@@ -201,30 +251,6 @@ fun DetailScreen(navController: NavController) {
         Text(text = "遷移元: $from", modifier = Modifier.padding(bottom = 16.dp))
         Button(onClick = { navController.popBackStack() }) {
             Text("前の画面に戻る")
-        }
-    }
-}
-
-@Composable
-fun LoginScreen(
-    navController: NavController,
-    onLoginSuccess: () -> Unit
-) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = "ログイン画面", modifier = Modifier.padding(bottom = 16.dp))
-        Text(text = "仮のログイン画面です", modifier = Modifier.padding(bottom = 32.dp))
-
-        Button(
-            onClick = {
-                // 仮のログイン処理（本来はここで認証処理を行う）
-                onLoginSuccess()
-            }
-        ) {
-            Text("ログイン")
         }
     }
 }
