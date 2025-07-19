@@ -1,6 +1,6 @@
 # StaJun Android
 学習記録共有アプリのAndroidアプリ
-# 使用技術
+## 使用技術
 - Kotolin
 - AndroidX
 - Jetpack Compose
