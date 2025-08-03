@@ -1,7 +1,7 @@
 package com.oyajun.stajun
 
-import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.oyajun.stajun.ui.login.LoginViewModel
 import com.oyajun.stajun.ui.theme.StaJunTheme
-import android.util.Log
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
