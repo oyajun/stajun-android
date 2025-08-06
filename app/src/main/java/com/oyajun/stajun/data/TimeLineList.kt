@@ -1,5 +1,6 @@
 package com.oyajun.stajun.data
 
+import android.content.Context
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
@@ -7,7 +8,7 @@ import io.ktor.client.HttpClient
 import kotlinx.coroutines.flow.Flow
 
 object TimeLineList {
-    fun getRecords(client: HttpClient): Flow<PagingData<Record>> {
+    fun getRecords(client: HttpClient, context: Context): Flow<PagingData<Record>> {
         return Pager(
             config = PagingConfig(
                 initialLoadSize = 10,  // 初期取得数、ページサイズを10件に設定。
@@ -15,7 +16,8 @@ object TimeLineList {
             )
         ) {
             TimeLinePagingSource(
-                client = client
+                client = client,
+                context = context
             )
         }.flow
     }

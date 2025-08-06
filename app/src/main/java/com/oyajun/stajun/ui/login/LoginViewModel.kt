@@ -8,10 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.oyajun.stajun.BuildConfig
 import com.oyajun.stajun.model.LoginData
 import com.oyajun.stajun.model.LoginState
-import com.oyajun.stajun.network.SharedPrefsCookieStorage
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.cookies.HttpCookies
+import com.oyajun.stajun.network.HttpClientProvider
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -24,12 +21,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class LoginViewModel(application: Application) : AndroidViewModel(application) {
-    private val client = HttpClient(CIO) {
-        install(HttpCookies) {
-            val prefs = getApplication<Application>().getSharedPreferences("cookies", Context.MODE_PRIVATE)
-            storage = SharedPrefsCookieStorage(prefs)
-        }
-    }
+    private val client = HttpClientProvider.getClient(getApplication())
 
     private val _loginData = MutableStateFlow(LoginData())
     val loginData: StateFlow<LoginData> = _loginData.asStateFlow()
@@ -83,15 +75,20 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 Log.d("LoginViewModel", "接続試行先: ${BuildConfig.API_BASE_URL}")
                 val response: HttpResponse = client.post(
-                    BuildConfig.API_BASE_URL + "/api/auth/sign-in/email-otp "
+                    BuildConfig.API_BASE_URL + "/api/auth/sign-in/email-otp"
                 ) {
                     contentType(ContentType.Application.Json)
                     setBody("""{"email":"${_loginData.value.email}","otp":"${_loginData.value.otp}"}""")
                 }
                 Log.d("LoginViewModel", "OTP リクエスト成功: ${response.status}")
 
+                // レスポンスヘッダーを確認
+                response.headers.forEach { name, values ->
+                    Log.d("LoginViewModel", "Response header: $name = ${values.joinToString(", ")}")
+                }
+
                 if (response.status.isSuccess()) {
-                    // cookieが正しく保存されているかチェック
+                    // cookieが正しく��存されているかチェック
                     val prefs = getApplication<Application>().getSharedPreferences("cookies", Context.MODE_PRIVATE)
                     val cookieSet = prefs.getStringSet("cookies", emptySet()) ?: emptySet()
                     Log.d("LoginViewModel", "ログイン成功後のcookie数: ${cookieSet.size}")
@@ -120,8 +117,10 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        client.close()
+    // 保存されているクッキーをクリアする機能を追加
+    fun clearCookies() {
+        val prefs = getApplication<Application>().getSharedPreferences("cookies", Context.MODE_PRIVATE)
+        prefs.edit().clear().apply()
+        Log.d("LoginViewModel", "All cookies cleared")
     }
 }

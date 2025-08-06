@@ -8,6 +8,7 @@ espressoCore = "3.6.1"
 ktorClientCio = "3.2.1"
 ktorClientContentNegotiation = "3.2.1"
 ktorClientCore = "3.2.1"
+ktorClientLogging = "3.2.3"
 ktorSerializationKotlinxJson = "3.2.1"
 lifecycleRuntimeKtx = "2.9.1"
 activityCompose = "1.10.1"
@@ -38,6 +39,7 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktorClientCio" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktorClientContentNegotiation" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorClientCore" }
+ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktorClientLogging" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktorSerializationKotlinxJson" }
 androidx-paging-common-android = { group = "androidx.paging", name = "paging-common-android", version.ref = "pagingCommonAndroid" }
 
