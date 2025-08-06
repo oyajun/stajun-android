@@ -23,11 +23,31 @@ data class Record(
     val dateUTC: String,
     val dateLocal: String,
     val isbn: String? = null,
-    val originalBookId: BigInteger? = null,
+    val originalBookId: String? = null, // BigInteger → String に変更
     val createdAt: String,
     val updatedAt: String,
-    val originalBook: Any? = null,
-    val user: Any? = null
+    val originalBook: OriginalBook? = null, // Any → 具体的な型に変更
+    val user: User? = null // Any → 具体的な型に変更
+)
+
+@Serializable
+data class OriginalBook(
+    val id: String,
+    val userId: String,
+    val type: String,
+    val order: Int,
+    val status: String,
+    val isbn: String? = null,
+    val title: String,
+    val color: String? = null,
+    val icon: String? = null,
+    val createdAt: String,
+    val updatedAt: String
+)
+
+@Serializable
+data class User(
+    val name: String
 )
 
 
@@ -66,7 +86,7 @@ class TimeLinePagingSource (
                 return LoadResult.Error(Exception("認証エラー: $errorBody"))
             }
 
-            // 成功でない場合も詳細を確認
+            // 成功でない場合も詳���を確認
             if (!response.status.isSuccess()) {
                 val errorBody = response.body<String>()
                 Log.e("TimeLinePaging", "${response.status.value} Error - Response body: $errorBody")

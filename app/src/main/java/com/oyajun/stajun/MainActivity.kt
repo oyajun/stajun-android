@@ -50,24 +50,19 @@ class MainActivity : ComponentActivity() {
 
                     // cookieからauth_tokenまたはセッション情報を確認
                     val hasAuthCookie = cookieSet.any { cookie ->
-                        // name|domain|path|cookie_header 形式で保存されているcookieを確認
-                        val parts = cookie.split("|", limit = 4)
-                        if (parts.size >= 4) {
+                        // name|domain|path|value|expires|secure|httpOnly 形式で保存されているcookieを確認
+                        val parts = cookie.split("|")
+                        if (parts.size >= 7) {
                             val name = parts[0]
-                            val cookieHeader = parts[3]
+                            val value = parts[3]
 
-                            // より詳細なcookieチェック
-                            val isAuthCookie = name == "auth_token" ||
-                                             name == "session_id" ||
-                                             name == "access_token" ||
-                                             name == "sessionid" ||
-                                             name == "jwt" ||
-                                             cookieHeader.contains("auth", ignoreCase = true) ||
-                                             cookieHeader.contains("session", ignoreCase = true)
+                            // better-auth.session_tokenクッキーをチェック
+                            val isAuthCookie = name == "better-auth.session_token" && value.isNotEmpty()
 
-                            Log.d("MainActivity", "Cookie名: $name, 認証Cookie: $isAuthCookie")
+                            Log.d("MainActivity", "Cookie名: $name, 値: ${value.take(20)}..., 認証Cookie: $isAuthCookie")
                             isAuthCookie
                         } else {
+                            Log.d("MainActivity", "無効なクッキー形式: $cookie")
                             false
                         }
                     }

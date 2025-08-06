@@ -1,6 +1,7 @@
 package com.oyajun.stajun.ui.home
 
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,7 +44,9 @@ fun HomeScreen() {
                 if (prependLoadState is LoadState.Loading) {
                     // 前データを読み込み中
                     item {
-                        Text("Loading previous data...", style = MaterialTheme.typography.bodyLarge)
+                        Card {
+                            Text("Loading previous data...", style = MaterialTheme.typography.bodyLarge)
+                        }
                     }
                 }
                 items(lazyPagingItems.itemCount) { index ->
