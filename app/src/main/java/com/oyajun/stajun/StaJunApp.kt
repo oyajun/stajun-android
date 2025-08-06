@@ -31,6 +31,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.oyajun.stajun.model.LoginState
+import com.oyajun.stajun.ui.home.HomeScreen
 import com.oyajun.stajun.ui.login.LoginEmailScreen
 import com.oyajun.stajun.ui.login.LoginOtpScreen
 import com.oyajun.stajun.ui.login.LoginViewModel
@@ -153,7 +154,7 @@ fun StaJunApp(initialLoginState: Boolean = false) {
             modifier = Modifier.padding(paddingValues)
         ) {
             composable(Screen.Home.route) {
-                HomeScreen(navController)
+                HomeScreen()
             }
             composable(Screen.Record.route) {
                 SearchScreen(navController)
@@ -190,19 +191,6 @@ fun StaJunApp(initialLoginState: Boolean = false) {
     }
 }
 
-@Composable
-fun HomeScreen(navController: NavController) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = "ホーム画面", modifier = Modifier.padding(bottom = 16.dp))
-        Button(onClick = { navController.navigate("detail/${Screen.Home.route}") }) {
-            Text("詳細画面へ")
-        }
-    }
-}
 
 @Composable
 fun SearchScreen(navController: NavController) {
