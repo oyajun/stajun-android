@@ -10,46 +10,30 @@ import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.isSuccess
-import kotlinx.serialization.Serializable
 import java.math.BigInteger
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 @Serializable
-data class Record(
-    val id: String,
-    val userId: String,
-    val type: String,
-    val amount: Int,
-    val comment: String? = null,
-    val dateUTC: String,
-    val dateLocal: String,
-    val isbn: String? = null,
-    val originalBookId: String? = null, // BigInteger → String に変更
-    val createdAt: String,
-    val updatedAt: String,
-    val originalBook: OriginalBook? = null, // Any → 具体的な型に変更
-    val user: User? = null // Any → 具体的な型に変更
+data class GoogleBooksResponse(
+    val items: List<GoogleBookItem>? = null
 )
 
 @Serializable
-data class OriginalBook(
-    val id: String,
-    val userId: String,
-    val type: String,
-    val order: Int,
-    val status: String,
-    val isbn: String? = null,
+data class GoogleBookItem(
+    val volumeInfo: VolumeInfo
+)
+
+@Serializable
+data class VolumeInfo(
     val title: String,
-    val color: String? = null,
-    val icon: String? = null,
-    val createdAt: String,
-    val updatedAt: String
+    val imageLinks: ImageLinks? = null
 )
 
 @Serializable
-data class User(
-    val name: String
+data class ImageLinks(
+    val thumbnail: String? = null
 )
-
 
 class TimeLinePagingSource (
     private val client: HttpClient,
@@ -96,9 +80,47 @@ class TimeLinePagingSource (
             val data = response.body<List<Record>>()
             Log.d("TimeLinePaging", "取得したレコード数: ${data.size}")
 
-            val cursor = if (data.isNotEmpty()) BigInteger(data.last().id) else null
+            // レコードリストを変更可能にするためにmutableListに変換
+            val mutableData = data.toMutableList()
+
+            mutableData.forEachIndexed { index, record ->
+                if (record.type == "PUBLISHED_BOOK" && record.publishedBook == null) {
+                    // Google Books APIにアクセスして書籍情報を取得
+                    record.isbn?.let { isbn ->
+                        try {
+                            val googleBooksUrl = "https://www.googleapis.com/books/v1/volumes?q=isbn:$isbn"
+                            Log.d("TimeLinePaging", "Google Books API 接続試行先: $googleBooksUrl")
+                            val googleBooksResponse: HttpResponse = client.get(googleBooksUrl)
+                            if (googleBooksResponse.status.isSuccess()) {
+                                val responseText = googleBooksResponse.body<String>()
+                                Log.d("TimeLinePaging", "Google Books API レスポンス (ISBN: $isbn): $responseText")
+
+                                val json = Json { ignoreUnknownKeys = true }
+                                val googleBooksData = json.decodeFromString<GoogleBooksResponse>(responseText)
+
+                                googleBooksData.items?.firstOrNull()?.let { bookItem ->
+                                    val publishedBook = PublishedBook(
+                                        title = bookItem.volumeInfo.title,
+                                        imageURL = bookItem.volumeInfo.imageLinks?.thumbnail ?: ""
+                                    )
+
+                                    // 新しいRecordオブジェクトを作成（publishedBookを設定）
+                                    mutableData[index] = record.copy(publishedBook = publishedBook)
+                                    Log.d("TimeLinePaging", "書籍情報を設定: ${publishedBook.title}")
+                                }
+                            } else {
+                                Log.w("TimeLinePaging", "Google Books API エラー (ISBN: $isbn): ${googleBooksResponse.status}")
+                            }
+                        } catch (e: Exception) {
+                            Log.e("TimeLinePaging", "Google Books API呼び出しエラー (ISBN: $isbn)", e)
+                        }
+                    }
+                }
+            }
+
+            val cursor = if (mutableData.isNotEmpty()) BigInteger(mutableData.last().id) else null
             return LoadResult.Page(
-                data = data,
+                data = mutableData,
                 prevKey = null,
                 nextKey = cursor
             )

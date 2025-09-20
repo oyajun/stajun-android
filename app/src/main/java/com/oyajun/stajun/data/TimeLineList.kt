@@ -14,7 +14,7 @@ object TimeLineList {
                 initialLoadSize = 10,  // 初期取得数、ページサイズを10件に設定。
                 pageSize = 10
             )
-        ) {
+         ) {
             TimeLinePagingSource(
                 client = client,
                 context = context

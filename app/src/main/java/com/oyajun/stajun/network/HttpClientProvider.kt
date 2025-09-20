@@ -3,7 +3,7 @@ package com.oyajun.stajun.network
 import android.content.Context
 import android.util.Log
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
@@ -23,7 +23,7 @@ object HttpClientProvider {
     }
 
     private fun createClient(context: Context): HttpClient {
-        return HttpClient(CIO) {
+        return HttpClient(OkHttp) {
             install(HttpCookies) {
                 val prefs = context.getSharedPreferences("cookies", Context.MODE_PRIVATE)
                 storage = SharedPrefsCookieStorage(prefs)
